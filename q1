@@ -1,0 +1,61 @@
+setwd("E:\\Documents\\School\\PHD\\EPY 723")
+
+library(lavaan)
+library(semTools)
+library(moments)
+
+filename <- 'ChatBotScale2023.csv'
+
+chatdata <- read.csv(filename)[,-1]
+
+cols <- c('item7','item8','item9','item10')
+
+chatdata[,cols] <- 6 - chatdata[,cols]
+
+statmode <- function(someval) {
+  
+  uval <- unique(na.omit(someval))
+  
+  uval[which.max(tabulate(match(someval,uval)))]
+  
+}
+
+descriptive <- function(somecol) {
+  
+  vector <- unname(
+    c(sum(!is.na(somecol)),
+      sum(is.na(somecol)),
+      min(somecol,na.rm=TRUE),
+      median(somecol,na.rm=TRUE),
+      statmode(somecol),
+      max(somecol,na.rm=TRUE)
+      )
+    )
+
+  return(vector)
+  
+}
+
+descriptives <- data.frame(descriptive(chatdata$item1),
+                           descriptive(chatdata$item2),
+                           descriptive(chatdata$item3),
+                           descriptive(chatdata$item4),
+                           descriptive(chatdata$item5),
+                           descriptive(chatdata$item6),
+                           descriptive(chatdata$item7),
+                           descriptive(chatdata$item8),
+                           descriptive(chatdata$item9),
+                           descriptive(chatdata$item10))
+
+write.table(t(descriptives),'descriptives.csv',row.names = c('Item 1','Item 2','Item 3','Item 4','Item 5','Item 9','Item 10','Item 11','Item 12','Item 13') ,
+          col.names =c('N','Missing','Min','Median','Mode','Max'), sep=",")
+
+mod1 <- c('item1','item2','item6')
+
+covar1 <- round(cor(chatdata[,mod1]),2)
+
+mod1f <- 'chatbelief =~ item1 + item2 + item6'
+
+fit1 <- cfa(mod1f, data=chatdata, std.lv=TRUE)
+
+summary(fit1)
